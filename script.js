@@ -1,45 +1,49 @@
-﻿let currentInput = "0";
-let firstOperand = null;
-let selectedOperator = null;
-let waitingForSecondOperand = false;
+﻿let expression = "";
 let justCalculated = false;
 let hasError = false;
 
 const display = document.getElementById("display");
+const status = document.getElementById("status");
 
-function updateDisplay() {
-    display.textContent = currentInput;
+function render() {
+    display.textContent = expression || "0";
+}
+
+function setStatus(message) {
+    status.textContent = message;
 }
 
 function clearCalculator() {
-    currentInput = "0";
-    firstOperand = null;
-    selectedOperator = null;
-    waitingForSecondOperand = false;
+    expression = "";
     justCalculated = false;
     hasError = false;
-    updateDisplay();
+
+    setStatus("Ready");
+    render();
 }
 
-function formatResult(value) {
+function showError(message) {
+    expression = "Error";
+    justCalculated = false;
+    hasError = true;
+
+    setStatus(message);
+    render();
+}
+
+function formatNumber(value) {
     if (!Number.isFinite(value)) {
         return null;
     }
 
-    const rounded = Number.parseFloat(value.toPrecision(12));
-    return String(rounded);
+    return String(Number.parseFloat(value.toPrecision(12)));
 }
 
-function showError() {
-    currentInput = "Error";
-    firstOperand = null;
-    selectedOperator = null;
-    waitingForSecondOperand = true;
-    justCalculated = false;
-    hasError = true;
-    updateDisplay();
-}
-
+/*
+ * Assignment requirement:
+ * Basic arithmetic is implemented using a JavaScript function
+ * and a switch statement.
+ */
 function performOperation(a, b, operator) {
     switch (operator) {
         case "+":
@@ -60,176 +64,209 @@ function performOperation(a, b, operator) {
 }
 
 function appendNumber(value) {
-    if (hasError) {
-        clearCalculator();
-    }
-
-    if (justCalculated) {
-        currentInput = value === "." ? "0." : value;
-        firstOperand = null;
-        selectedOperator = null;
-        waitingForSecondOperand = false;
+    if (hasError || justCalculated) {
+        expression = "";
+        hasError = false;
         justCalculated = false;
-        updateDisplay();
-        return;
     }
 
-    if (waitingForSecondOperand) {
-        currentInput = value === "." ? "0." : value;
-        waitingForSecondOperand = false;
-        updateDisplay();
-        return;
-    }
+    const parts = expression.split(/[+\-*/]/);
+    const currentNumber = parts[parts.length - 1];
 
     if (value === ".") {
-        if (currentInput.includes(".")) {
+        if (currentNumber.includes(".")) {
             return;
         }
 
-        currentInput += ".";
-    } else if (currentInput === "0") {
-        currentInput = value;
+        if (
+            expression === "" ||
+            /[+\-*/]$/.test(expression)
+        ) {
+            expression += "0.";
+        } else {
+            expression += ".";
+        }
     } else {
-        currentInput += value;
+        if (currentNumber === "0") {
+            expression =
+                expression.slice(0, -1) + value;
+        } else {
+            expression += value;
+        }
     }
 
-    updateDisplay();
+    setStatus("Entering number");
+    render();
 }
 
 function chooseOperator(nextOperator) {
-    if (hasError) {
+    if (hasError || expression === "") {
         return;
     }
 
-    const inputValue = Number(currentInput);
-
-    if (!Number.isFinite(inputValue)) {
-        showError();
-        return;
+    /*
+     * Important:
+     * The operator is immediately added to the visible display.
+     * So 85 then + visibly becomes "85 +".
+     */
+    if (/[+\-*/]$/.test(expression)) {
+        expression =
+            expression.slice(0, -1) + nextOperator;
+    } else {
+        expression += nextOperator;
     }
 
-    if (firstOperand === null) {
-        firstOperand = inputValue;
-    } else if (!waitingForSecondOperand && selectedOperator !== null) {
-        const result = performOperation(
-            firstOperand,
-            inputValue,
-            selectedOperator
-        );
-
-        const formatted = result === null ? null : formatResult(result);
-
-        if (formatted === null) {
-            showError();
-            return;
-        }
-
-        currentInput = formatted;
-        firstOperand = Number(formatted);
-        updateDisplay();
-    }
-
-    selectedOperator = nextOperator;
-    waitingForSecondOperand = true;
     justCalculated = false;
+
+    setStatus("Operator selected");
+    render();
 }
 
 function calculate() {
     if (
         hasError ||
-        firstOperand === null ||
-        selectedOperator === null ||
-        waitingForSecondOperand
+        expression === "" ||
+        !/[+\-*/]/.test(expression)
     ) {
         return;
     }
 
-    const secondOperand = Number(currentInput);
-
-    if (!Number.isFinite(secondOperand)) {
-        showError();
+    if (/[+\-*/]$/.test(expression)) {
+        showError("Enter a second number");
         return;
     }
 
-    const result = performOperation(
-        firstOperand,
-        secondOperand,
-        selectedOperator
+    const tokens = expression.match(
+        /(?:\d+(?:\.\d*)?|\.\d+)|[+\-*/]/g
     );
 
-    const formatted = result === null ? null : formatResult(result);
-
-    if (formatted === null) {
-        showError();
+    if (!tokens) {
+        showError("Invalid expression");
         return;
     }
 
-    currentInput = formatted;
-    firstOperand = null;
-    selectedOperator = null;
-    waitingForSecondOperand = false;
+    let result = Number(tokens[0]);
+
+    if (!Number.isFinite(result)) {
+        showError("Invalid number");
+        return;
+    }
+
+    for (let i = 1; i < tokens.length; i += 2) {
+        const operator = tokens[i];
+        const operand = Number(tokens[i + 1]);
+
+        if (!Number.isFinite(operand)) {
+            showError("Invalid number");
+            return;
+        }
+
+        const nextResult =
+            performOperation(
+                result,
+                operand,
+                operator
+            );
+
+        if (nextResult === null) {
+            showError("Cannot divide by zero");
+            return;
+        }
+
+        result = nextResult;
+    }
+
+    const formatted = formatNumber(result);
+
+    if (formatted === null) {
+        showError("Invalid result");
+        return;
+    }
+
+    expression = formatted;
     justCalculated = true;
 
-    updateDisplay();
+    setStatus("Calculated");
+    render();
 }
 
 function deleteLast() {
-    if (hasError) {
+    if (hasError || justCalculated) {
         clearCalculator();
         return;
     }
 
-    if (waitingForSecondOperand || justCalculated) {
-        return;
-    }
+    expression = expression.slice(0, -1);
 
-    currentInput =
-        currentInput.length > 1
-            ? currentInput.slice(0, -1)
-            : "0";
+    setStatus(
+        expression ? "Editing" : "Ready"
+    );
 
-    if (currentInput === "-" || currentInput === "") {
-        currentInput = "0";
-    }
-
-    updateDisplay();
+    render();
 }
 
+/*
+ * Button events
+ */
 document.querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", () => {
-        if (button.dataset.number !== undefined) {
-            appendNumber(button.dataset.number);
-        } else if (button.dataset.operator) {
-            chooseOperator(button.dataset.operator);
-        } else if (button.dataset.action === "equals") {
+
+        const number = button.dataset.number;
+        const operator = button.dataset.operator;
+        const action = button.dataset.action;
+
+        if (number !== undefined) {
+            appendNumber(number);
+
+        } else if (operator) {
+            chooseOperator(operator);
+
+        } else if (action === "equals") {
             calculate();
-        } else if (button.dataset.action === "clear") {
+
+        } else if (action === "clear") {
             clearCalculator();
-        } else if (button.dataset.action === "delete") {
+
+        } else if (action === "delete") {
             deleteLast();
         }
     });
 });
 
+/*
+ * Keyboard support
+ */
 document.addEventListener("keydown", (event) => {
     const key = event.key;
 
     if (/^[0-9.]$/.test(key)) {
         event.preventDefault();
         appendNumber(key);
-    } else if (["+", "-", "*", "/"].includes(key)) {
+
+    } else if (
+        ["+", "-", "*", "/"].includes(key)
+    ) {
         event.preventDefault();
         chooseOperator(key);
-    } else if (key === "Enter" || key === "=") {
+
+    } else if (
+        key === "Enter" ||
+        key === "="
+    ) {
         event.preventDefault();
         calculate();
-    } else if (key === "Escape" || key.toLowerCase() === "c") {
+
+    } else if (
+        key === "Escape" ||
+        key.toLowerCase() === "c"
+    ) {
         event.preventDefault();
         clearCalculator();
+
     } else if (key === "Backspace") {
         event.preventDefault();
         deleteLast();
     }
 });
 
-updateDisplay();
+render();

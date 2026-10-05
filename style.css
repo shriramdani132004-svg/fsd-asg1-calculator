@@ -17,12 +17,12 @@ body {
 }
 
 .calculator {
-    width: min(360px, 100%);
+    width: min(370px, 100%);
     margin: auto;
     padding: 24px;
-    border-radius: 20px;
+    border-radius: 22px;
     background: #171717;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
 }
 
 h1 {
@@ -33,17 +33,25 @@ h1 {
 }
 
 .display {
-    min-height: 74px;
-    margin-bottom: 14px;
-    padding: 16px;
+    min-height: 78px;
+    padding: 14px 16px;
     border-radius: 12px;
     background: #ffffff;
     color: #111827;
     font-size: 34px;
-    line-height: 1.2;
+    font-weight: 700;
+    line-height: 1.35;
     text-align: right;
     overflow: hidden;
     overflow-wrap: anywhere;
+}
+
+.status {
+    height: 22px;
+    margin: 6px 3px 12px;
+    color: #a3a3a3;
+    font-size: 12px;
+    text-align: right;
 }
 
 .keypad {
@@ -78,10 +86,10 @@ button:active {
 }
 
 .equals {
+    height: 126px;
+    grid-row: span 2;
     background: #10b981;
     color: #ffffff;
-    grid-row: span 2;
-    height: 126px;
 }
 
 .danger {
