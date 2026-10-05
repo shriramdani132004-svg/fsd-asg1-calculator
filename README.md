@@ -1,6 +1,6 @@
 ﻿# Assignment 1 - JavaScript Calculator
 
-A fully functional calculator built with HTML, CSS and vanilla JavaScript.
+A fully functional calculator created using HTML, CSS and Vanilla JavaScript.
 
 ## Assignment Requirement
 
@@ -15,7 +15,7 @@ Use an if-else or switch statement.
 
 ## Implementation
 
-The `performOperation()` JavaScript function uses a `switch` statement for the four arithmetic operations.
+The `performOperation()` function uses a `switch` statement for all four arithmetic operations.
 
 ## Features
 
@@ -24,20 +24,16 @@ The `performOperation()` JavaScript function uses a `switch` statement for the f
 - Multiplication
 - Division
 - Decimal numbers
-- Clear button
-- Backspace button
+- Clear
+- Backspace
 - Keyboard support
 - Division-by-zero handling
-- Visible operator while entering calculations
+- Visible selected operator
 - Chained calculations
-- Responsive layout
 
-## Example
+## Test
 
 85 + 15 = 100
-
-## Technologies
-
-- HTML5
-- CSS3
-- Vanilla JavaScript
+20 - 7 = 13
+8 * 9 = 72
+100 / 4 = 25

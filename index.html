@@ -1,55 +1,555 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JavaScript Calculator</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>JavaScript Calculator</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+}
+
+.calculator {
+    width: 350px;
+    padding: 25px;
+    background: #202020;
+    border-radius: 18px;
+    box-shadow: 0 15px 35px rgba(0,0,0,.25);
+}
+
+h1 {
+    margin: 0 0 15px;
+    color: white;
+    text-align: center;
+    font-size: 23px;
+}
+
+#expression {
+    height: 28px;
+    color: #aaa;
+    text-align: right;
+    font-size: 15px;
+    padding-right: 5px;
+}
+
+#display {
+    width: 100%;
+    height: 65px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 30px;
+    text-align: right;
+    background: white;
+    color: black;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+button {
+    height: 60px;
+    border: none;
+    border-radius: 10px;
+    background: #e5e5e5;
+    color: #111;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(.96);
+}
+
+.operator {
+    background: #ff9800;
+    color: white;
+}
+
+.clear {
+    background: #e53935;
+    color: white;
+}
+
+.equal {
+    background: #2eae60;
+    color: white;
+    grid-row: span 2;
+    height: 130px;
+}
+
+.zero {
+    grid-column: span 2;
+}
+
+#status {
+    margin-top: 12px;
+    text-align: center;
+    color: #aaa;
+    font-size: 12px;
+}
+</style>
 </head>
+
 <body>
 
-<main class="app">
-    <section class="calculator" aria-label="JavaScript Calculator">
+<div class="calculator">
 
-        <h1>JavaScript Calculator</h1>
+    <h1>JavaScript Calculator</h1>
 
-        <div id="display" class="display" aria-live="polite">0</div>
-        <div id="status" class="status">Ready</div>
+    <div id="expression"></div>
 
-        <div class="keypad">
+    <input
+        id="display"
+        type="text"
+        value="0"
+        readonly
+    >
 
-            <button type="button" data-action="clear" class="danger">C</button>
-            <button type="button" data-action="delete">⌫</button>
-            <button type="button" data-operator="/" class="operator">÷</button>
-            <button type="button" data-operator="*" class="operator">×</button>
+    <div class="buttons">
 
-            <button type="button" data-number="7">7</button>
-            <button type="button" data-number="8">8</button>
-            <button type="button" data-number="9">9</button>
-            <button type="button" data-operator="-" class="operator">−</button>
+        <button class="clear" onclick="clearCalculator()">C</button>
+        <button onclick="deleteLast()">⌫</button>
+        <button class="operator" onclick="chooseOperator('/')">÷</button>
+        <button class="operator" onclick="chooseOperator('*')">×</button>
 
-            <button type="button" data-number="4">4</button>
-            <button type="button" data-number="5">5</button>
-            <button type="button" data-number="6">6</button>
-            <button type="button" data-operator="+" class="operator">+</button>
+        <button onclick="appendNumber('7')">7</button>
+        <button onclick="appendNumber('8')">8</button>
+        <button onclick="appendNumber('9')">9</button>
+        <button class="operator" onclick="chooseOperator('-')">−</button>
 
-            <button type="button" data-number="1">1</button>
-            <button type="button" data-number="2">2</button>
-            <button type="button" data-number="3">3</button>
-            <button type="button" data-action="equals" class="equals">=</button>
+        <button onclick="appendNumber('4')">4</button>
+        <button onclick="appendNumber('5')">5</button>
+        <button onclick="appendNumber('6')">6</button>
+        <button class="operator" onclick="chooseOperator('+')">+</button>
 
-            <button type="button" data-number="0" class="zero">0</button>
-            <button type="button" data-number=".">.</button>
+        <button onclick="appendNumber('1')">1</button>
+        <button onclick="appendNumber('2')">2</button>
+        <button onclick="appendNumber('3')">3</button>
+        <button class="equal" onclick="calculate()">=</button>
 
-        </div>
+        <button class="zero" onclick="appendNumber('0')">0</button>
+        <button onclick="appendNumber('.')">.</button>
 
-        <p class="hint">
-            Click the buttons or use your keyboard.
-        </p>
+    </div>
 
-    </section>
-</main>
+    <div id="status">Ready</div>
 
-<script src="script.js"></script>
+</div>
+
+<script>
+
+let firstNumber = null;
+let operator = null;
+let waitingForSecondNumber = false;
+let hasCalculated = false;
+let hasError = false;
+
+const display = document.getElementById("display");
+const expression = document.getElementById("expression");
+const status = document.getElementById("status");
+
+
+function updateDisplay(value) {
+    display.value = value;
+}
+
+
+function clearCalculator() {
+
+    firstNumber = null;
+    operator = null;
+    waitingForSecondNumber = false;
+    hasCalculated = false;
+    hasError = false;
+
+    updateDisplay("0");
+    expression.textContent = "";
+    status.textContent = "Ready";
+}
+
+
+function formatResult(value) {
+
+    if (!Number.isFinite(value)) {
+        return null;
+    }
+
+    return String(Number.parseFloat(value.toPrecision(12)));
+}
+
+
+/*
+==================================================
+ASSIGNMENT REQUIREMENT
+JavaScript function + switch statement
+==================================================
+*/
+function performOperation(a, b, selectedOperator) {
+
+    switch (selectedOperator) {
+
+        case "+":
+            return a + b;
+
+        case "-":
+            return a - b;
+
+        case "*":
+            return a * b;
+
+        case "/":
+            if (b === 0) {
+                return null;
+            }
+
+            return a / b;
+
+        default:
+            return null;
+    }
+}
+
+
+function appendNumber(number) {
+
+    if (hasError) {
+        clearCalculator();
+    }
+
+    if (hasCalculated) {
+
+        firstNumber = null;
+        operator = null;
+        waitingForSecondNumber = false;
+        hasCalculated = false;
+
+        display.value = "0";
+        expression.textContent = "";
+    }
+
+
+    if (waitingForSecondNumber) {
+
+        display.value =
+            number === "." ? "0." : number;
+
+        waitingForSecondNumber = false;
+
+        status.textContent = "Enter second number";
+
+        return;
+    }
+
+
+    if (number === ".") {
+
+        if (display.value.includes(".")) {
+            return;
+        }
+
+        display.value += ".";
+
+    } else {
+
+        if (display.value === "0") {
+            display.value = number;
+        } else {
+            display.value += number;
+        }
+    }
+
+    status.textContent = "Entering number";
+}
+
+
+function chooseOperator(selectedOperator) {
+
+    if (hasError) {
+        return;
+    }
+
+    const currentNumber = Number(display.value);
+
+    if (!Number.isFinite(currentNumber)) {
+        showError("Invalid number");
+        return;
+    }
+
+
+    /*
+    If user enters:
+
+    85
+    +
+    
+    immediately show:
+
+    85 +
+    */
+
+    if (
+        firstNumber !== null &&
+        operator !== null &&
+        !waitingForSecondNumber
+    ) {
+
+        const result = performOperation(
+            firstNumber,
+            currentNumber,
+            operator
+        );
+
+        const formatted = formatResult(result);
+
+        if (formatted === null) {
+            showError("Cannot divide by zero");
+            return;
+        }
+
+        firstNumber = Number(formatted);
+
+        display.value = formatted;
+    }
+
+
+    else if (firstNumber === null) {
+
+        firstNumber = currentNumber;
+    }
+
+
+    operator = selectedOperator;
+
+    waitingForSecondNumber = true;
+
+    hasCalculated = false;
+
+
+    const visibleOperator =
+        selectedOperator === "*"
+            ? "×"
+            : selectedOperator === "/"
+            ? "÷"
+            : selectedOperator === "-"
+            ? "−"
+            : "+";
+
+
+    expression.textContent =
+        firstNumber + " " + visibleOperator;
+
+    status.textContent = "Operator selected";
+}
+
+
+function calculate() {
+
+    if (
+        hasError ||
+        firstNumber === null ||
+        operator === null ||
+        waitingForSecondNumber
+    ) {
+        return;
+    }
+
+
+    const secondNumber = Number(display.value);
+
+    if (!Number.isFinite(secondNumber)) {
+        showError("Invalid number");
+        return;
+    }
+
+
+    const result = performOperation(
+        firstNumber,
+        secondNumber,
+        operator
+    );
+
+
+    const formatted = formatResult(result);
+
+
+    if (formatted === null) {
+        showError("Cannot divide by zero");
+        return;
+    }
+
+
+    const visibleOperator =
+        operator === "*"
+            ? "×"
+            : operator === "/"
+            ? "÷"
+            : operator === "-"
+            ? "−"
+            : "+";
+
+
+    expression.textContent =
+        firstNumber +
+        " " +
+        visibleOperator +
+        " " +
+        secondNumber +
+        " =";
+
+
+    display.value = formatted;
+
+
+    firstNumber = null;
+    operator = null;
+    waitingForSecondNumber = false;
+    hasCalculated = true;
+
+    status.textContent = "Calculated";
+}
+
+
+function deleteLast() {
+
+    if (hasError) {
+        clearCalculator();
+        return;
+    }
+
+    if (
+        waitingForSecondNumber ||
+        hasCalculated
+    ) {
+        return;
+    }
+
+
+    if (display.value.length <= 1) {
+        display.value = "0";
+        return;
+    }
+
+
+    display.value =
+        display.value.slice(0, -1);
+
+
+    if (display.value === "") {
+        display.value = "0";
+    }
+}
+
+
+function showError(message) {
+
+    display.value = "Error";
+    expression.textContent = "";
+    status.textContent = message;
+
+    firstNumber = null;
+    operator = null;
+    waitingForSecondNumber = false;
+    hasCalculated = false;
+    hasError = true;
+}
+
+
+/*
+==================================================
+KEYBOARD SUPPORT
+==================================================
+*/
+
+document.addEventListener("keydown", function(event) {
+
+    const key = event.key;
+
+
+    if (
+        key >= "0" &&
+        key <= "9"
+    ) {
+
+        event.preventDefault();
+        appendNumber(key);
+
+    }
+
+
+    else if (key === ".") {
+
+        event.preventDefault();
+        appendNumber(".");
+
+    }
+
+
+    else if (
+        key === "+" ||
+        key === "-" ||
+        key === "*" ||
+        key === "/"
+    ) {
+
+        event.preventDefault();
+        chooseOperator(key);
+
+    }
+
+
+    else if (
+        key === "Enter" ||
+        key === "="
+    ) {
+
+        event.preventDefault();
+        calculate();
+
+    }
+
+
+    else if (
+        key === "Escape" ||
+        key.toLowerCase() === "c"
+    ) {
+
+        event.preventDefault();
+        clearCalculator();
+
+    }
+
+
+    else if (key === "Backspace") {
+
+        event.preventDefault();
+        deleteLast();
+
+    }
+
+});
+
+
+clearCalculator();
+
+</script>
+
 </body>
 </html>
